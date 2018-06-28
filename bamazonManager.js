@@ -69,11 +69,21 @@ function mainMenu() {
 // Returns info on all current products.
 function queryAllProducts() {
   console.log(divider);
-  console.log("Items In Stock:\n");
+  console.log(chalk.green("Items In Stock:\n"));
   connection.query("SELECT * FROM products", function(err, res) {
-    for (var i = 0; i < res.length; i++) {
-      console.log(res[i].item_id + " | " + res[i].product_name + " | " + res[i].department_name + " | " + res[i].price+ " | " + res[i].stock_quantity + " |");
-    }
+     
+    // Instantiate table
+      var table = new Table({
+        head: [chalk.green('ID'), chalk.green('Product'), chalk.green('Department'), chalk.green('Price'), chalk.green('Stock')]
+      , colWidths: [4, 28, 15, 10, 7]
+    });
+  
+      for (var i = 0; i < res.length; i++) {
+        
+      table.push( [res[i].item_id, res[i].product_name, res[i].department_name, res[i].price+".00", res[i].stock_quantity]
+      );
+      }
+      console.log(table.toString());
     mainMenu();
   });
 };
@@ -82,16 +92,30 @@ function queryAllProducts() {
 function viewLowInventory() {
   var query = "SELECT * FROM products WHERE stock_quantity < 5;";
   connection.query(query, function(err, res) {
+
+    console.log(divider);
+    console.log(chalk.red("Low Stock:\n"));
+
+     // Instantiate table
+     var table = new Table({
+      head: [chalk.red('ID'), chalk.red('Product'), chalk.red('Department'), chalk.red('Price'), chalk.red('Stock')]
+    , colWidths: [4, 28, 15, 10, 7]
+    });
+
     for (var i = 0; i < res.length; i++) {
-      console.log("Item: "+res[i].product_name+" | Stock: "+res[i].stock_quantity);
+      
+    table.push( [res[i].item_id, res[i].product_name, res[i].department_name, res[i].price+".00", res[i].stock_quantity]
+    );
     }
+    console.log(table.toString());
+    
     mainMenu();
   });
 };
 
 //* If a manager selects `Add to Inventory`, your app should display a prompt that will let the manager "add more" of any item currently in the store.
 function updateInventory() {
-  console.log("Updating inventory...\n");
+  console.log(chalk.magenta("\nUpdating inventory...\n"));
   inquirer
   .prompt([
     {
@@ -127,15 +151,15 @@ function updateInventory() {
       }
     ],
     function(err, res) {
-      console.log(res.affectedRows + " products updated!\n");
+      console.log(chalk.magenta("\n Item ID #"+id+" stock updated to "+newStock+".\n"));
+      mainMenu();
     })
   })
-  mainMenu();
 };
 
 //* If a manager selects `Add New Product`, it should allow the manager to add a completely new product to the store.
 function addProduct() {
-  console.log("Adding a new product...\n");
+  console.log(chalk.magenta("\nAdding a new product...\n"));
   inquirer
   .prompt([
     {
@@ -177,8 +201,7 @@ function addProduct() {
    var price = answers.priceInput;
    var quantity = answers.quantityInput;
    var department =  answers.departmentInput;
-  //  updateInventory(productNew, priceNew, stockNew, departmentNew);
-  console.log("NEW ITEM! "+product+" "+price);
+
   updateDB(product, price, quantity, department);
   })
 }; 
@@ -190,14 +213,14 @@ function updateDB(product, price, quantity, department) {
       product_name: product,
       department_name: department,
       price: price,
-      stock_quantity: quantity
+      stock_quantity: quantity,
+      product_sales: 0
     },
     function(err, res) {
-      console.log(res.affectedRows + " product inserted!\n");
+      console.log(chalk.magenta(product+" added!\n"));
+      mainMenu();
     }
-   
   )
-  mainMenu();
 };
 
 function exitApp() {

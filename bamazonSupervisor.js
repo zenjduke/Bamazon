@@ -34,6 +34,7 @@ function mainMenu() {
       type: "rawlist",
       message: "What would you like to do?",
       choices: [
+        "View All Departments.",
         "View Product Sales by Department.",
         "Create New Department.",
         "Quit."
@@ -41,8 +42,13 @@ function mainMenu() {
     })
     .then(function(answer) {
       switch (answer.action) {
+
+      case "View All Departments.":
+      queryDepartments();
+      break;
+
       case "View Product Sales by Department.":
-        queryDepartments();
+        queryDepartmentSales();
         break;
 
       case "Create New Department.":
@@ -56,19 +62,39 @@ function mainMenu() {
     })
 };
 
-// Returns info on all current products.
 function queryDepartments() {
   console.log(divider);
-  console.log("Current Bamazon Departments:\n");
+  console.log(chalk.green("Bamazon Departments:\n"));
+  connection.query("SELECT * FROM departments", function(err, res) {
 
-  var query = "SELECT id, name, over_head_costs, product_sales FROM departments INNER JOIN products ON departments.name = products.department_name GROUP BY department_name ORDER BY id;";
+      // Instantiate table
+      var table = new Table({
+        head: [chalk.green('ID'), chalk.green('Department'), chalk.green('Monthly Overhead Costs')]
+      , colWidths: [4, 18, 26]
+    });
+  
+      for (var i = 0; i < res.length; i++) {
+        
+      table.push( [res[i].id, res[i].name, res[i].over_head_costs+".00"]
+      );
+      }
+      console.log(table.toString());
 
-  connection.query(query, function(err, res) {
+    mainMenu();
+  });
+};
+
+// Returns info on all current products.
+function queryDepartmentSales() {
+  console.log(divider);
+  console.log(chalk.green("\nTotal Sales and Profit By Department:\n"));
+
+  connection.query("SELECT id, name, over_head_costs, product_sales FROM departments INNER JOIN products ON departments.name = products.department_name GROUP BY department_name ORDER BY id;", function(err, res) {
 
      // Instantiate table
      var table = new Table({
-      head: [chalk.green('ID'), chalk.green('Dept. Name'), chalk.green('Overhead Costs'), chalk.green('Sales'), chalk.green('Total Profit')]
-    , colWidths: [5, 13, 17, 10, 15]
+      head: [chalk.green('ID'), chalk.green('Dept. Name'), chalk.green('Monthly Overhead Costs'), chalk.green('Sales'), chalk.green('Total Profit')]
+    , colWidths: [5, 13, 26, 10, 15]
   });
 
     for (var i = 0; i < res.length; i++) {
@@ -77,7 +103,7 @@ function queryDepartments() {
       profit = sales-cost;
  
     // table is an Array, so you can `push`, `unshift`, `splice` and friends
-    table.push( [res[i].id, res[i].name, res[i].over_head_costs, res[i].product_sales, profit]
+    table.push( [res[i].id, res[i].name, res[i].over_head_costs+".00", res[i].product_sales+".00", profit+".00"]
     );
     }
     console.log(table.toString());
@@ -89,7 +115,7 @@ function queryDepartments() {
 //* If a manager selects `Add to Inventory`, your app should display a prompt that will let the manager "add more" of any item currently in the store.
 function createDepartment() {
 
-  console.log("Adding a new department...\n");
+  console.log(chalk.magenta("\nAdding a new department...\n"));
   inquirer
   .prompt([
     {
@@ -115,7 +141,7 @@ function createDepartment() {
    var overhead = answers.overheadInput;
 
   //  updateInventory(productNew, priceNew, stockNew, departmentNew);
-  console.log("New "+department+" department created with $"+overhead+" overhead cost.");
+  console.log("New "+department+" department created with $"+overhead+" monthly overhead cost.");
   updateDB(department, overhead);
   });
 };
