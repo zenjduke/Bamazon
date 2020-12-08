@@ -11,7 +11,7 @@ var connection = mysql.createConnection({
   host: "localhost",
 
   // Your port; if not 3306
-  port: 3306,
+  port: 8889,
 
   // Your username
   user: "root",
@@ -22,6 +22,7 @@ var connection = mysql.createConnection({
 });
 
 connection.connect(function(err) {
+  console.log("working...");
   if (err) throw err;
   console.log(divider);
   console.log(chalk.green("Welcome to Bamazon!"));
